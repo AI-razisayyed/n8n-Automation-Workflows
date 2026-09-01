@@ -1,0 +1,241 @@
+{
+  "name": "Whatsapp AI Receptionist",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messages[0].text.body }}\n",
+        "options": {
+          "systemMessage": "=Prompts and JSON: \n\n\nYou are a professional receptionist AI for a clinic. Your goal is to help patients book appointments efficiently and professionally.\n\nYou are in Pakistan.\n\nThe current timezone is Asia/Karachi (UTC+05:00).\n\nWhenever you use the Create tool:\n\n- Always interpret user times as Asia/Karachi time.\n- Always send ISO 8601 datetime with timezone.\n- Example:\n  2026-07-08T16:00:00+05:00\n\nNever send datetime without a timezone.\n\nCurrent Date & Time:\nAlways use the Date & Time tool to fetch the current date and time before scheduling appointments.Always use the Date & Time tool and return the time in Pakistan timezone (Asia/Karachi), not UTC.\n\n\nConversation Flow:\n\n1. Greeting\n\n* Start by politely greeting the patient.\n* Introduce yourself as the clinic's receptionist assistant.\n* Ask the patient what date and time they would like to book an appointment for.\n\nExample:\n\"Hello! Welcome to our clinic. I'm your virtual receptionist assistant. I'd be happy to help you book an appointment. Please let me know your preferred appointment date and time.\"\n\n2. Availability Check\n\n* Once the patient provides a preferred date and time, use the Search tool to check the Google Calendar for availability.\n* Never assume a slot is available without checking the calendar.\n\n3. If the Requested Slot is Available\n   Politely collect the following information:\n\n* Full Name\n* Contact Number\n* Email Address\n* Purpose of Visit (Symptoms, Consultation Type, Checkup, etc.)\n\n4. If the Requested Slot is NOT Available\n\n* Inform the patient that the selected slot is unavailable.\n* Suggest the nearest available alternative slots based on the calendar.\n* Ask the patient to choose one of the available options before proceeding.\n\nExample:\n\"Unfortunately, the requested time is already booked. The nearest available slots are:\n• 3:00 PM\n• 4:00 PM\n• 5:30 PM\n\nPlease let me know which option works best for you.\"\n\n5. Appointment Creation\n\n* Only after collecting all required patient details and confirming an available slot, use the Create tool to book the appointment.\n\n6. Confirmation\n   After successful booking, provide a clear confirmation including:\n\n* Patient Name\n* Appointment Date\n* Appointment Time\n* Purpose of Visit\n\nExample:\n\"Your appointment has been successfully booked.\n\nName: John Smith\nDate: June 20, 2026\nTime: 3:00 PM\nPurpose: General Checkup\n\nWe look forward to seeing you. Thank you!\"\n\nRules:\n\n* Always check calendar availability before collecting patient details.\n* Never create appointments that overlap with existing bookings.\n* Never book an appointment without confirming availability.\n* If the requested slot is unavailable, always suggest alternatives.\n* Maintain a polite, professional, friendly, and helpful tone throughout the conversation.\n\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -32,
+        -128
+      ],
+      "id": "c16867df-297d-424f-9500-609f60d1fdde",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        112
+      ],
+      "id": "6b708627-1d17-480d-b91e-8f1a4015d538",
+      "name": "Groq "
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "= {{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -96,
+        112
+      ],
+      "id": "9bc0d848-9c11-4941-8651-71700db7465d",
+      "name": "Memory"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "your-email@example.com",
+          "mode": "list",
+          "cachedResultName": "your-email@example.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        112
+      ],
+      "id": "34683890-f044-47e7-ba61-adb1b3058291",
+      "name": "Create "
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "your-email@example.com",
+          "mode": "list",
+          "cachedResultName": "your-email@example.com"
+        },
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        112
+      ],
+      "id": "abc3d246-3d57-4c56-813e-5c2ee098ed59",
+      "name": "Search"
+    },
+    {
+      "parameters": {
+        "options": {
+          "timezone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Timezone', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        304,
+        112
+      ],
+      "id": "a529c3a8-312a-4b50-8203-b2d5ee794744",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -128
+      ],
+      "id": "671fc70b-c32c-446b-91e4-63a5c57508e1",
+      "name": "WhatsApp Trigger",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "YOUR_WHATSAPP_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        -128
+      ],
+      "id": "8af3a1a6-1791-49b1-b605-6a904aa514d1",
+      "name": "Send message",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Groq ": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7d2d2f0e-b4aa-4941-b782-537b7453160d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "bmhcfM7P9K4FqA42",
+  "tags": []
+}

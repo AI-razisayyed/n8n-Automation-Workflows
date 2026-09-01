@@ -1,0 +1,290 @@
+{
+  "name": "AI-powered lead capture/ Personalized onboarding system",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "AI Automation Course Registration",
+        "formDescription": "Please fill this form carefully to get enrolled in this course",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "First Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Last Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Age",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "16 - 20"
+                  },
+                  {
+                    "option": "21 - 25"
+                  },
+                  {
+                    "option": "26 - 30"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "City",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Profession",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Learning Goal/ Project Idea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -704,
+        -208
+      ],
+      "id": "0ecd4e3d-608f-4d13-ae89-d0129315fb57",
+      "name": "On form submission",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=First Name: {{ $json['First Name'] }}\nEmail:{{ $json.Email }} \nLast Name: {{ $json['Last Name'] }}\nAge: {{ $json.Age }}\nCity: {{ $json.City }}\nProfession: {{ $json.Profession }}\nLearning Goal/ Project Idea: {{ $json['Learning Goal/ Project Idea'] }}\n",
+        "options": {
+          "systemMessage": "=You are aYou are an onboarding assistant\n\nwrite a warm welcome email\n\nName: {{ $json['First Name'] }} {{ $json['Last Name'] }} \n\nProfession: {{ $json.Profession }} \n\nGoal: {{ $json['Learning Goal/ Project Idea'] }}\n\nkeep it friendly and motivating.\nmaximum 120 words.\n\nexample output:\n\nHi Manam,\n\nThank you for joining us.\n\nAs a teacher, learning AI can help you save time.\n\nCreate eduactional content faster, and automate many repetitive tasks.\n\nwe're excited to have you onboard and cann't wait to help you build practical AI systems.\n\nsee you inside!\n\nBest Regards\nRazi Fatima helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -224,
+        -208
+      ],
+      "id": "d03ad4f7-9286-4d66-a220-e6cdcd7b048d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "groq/compound-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        -32
+      ],
+      "id": "dfe02847-fdde-4c68-b391-3a6d8e087b55",
+      "name": "Groq Chat Model"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json.Email }}",
+        "subject": "=Hello {{ $('On form submission').item.json['First Name'] }} {{ $('On form submission').item.json['Last Name'] }}!\nWelcome to our AI Automation Course.",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        -208
+      ],
+      "id": "dfafee37-7c3a-4b38-af9d-776d1f9ae02e",
+      "name": "Send a message",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Day 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "First Name": "={{ $json['First Name'] }}",
+            "Last Name": "={{ $json['Last Name'] }}",
+            "Age": "={{ $json.Age }}",
+            "City": "={{ $json.City }}",
+            "Profession": "={{ $json.Profession }}",
+            "Learning Goal/ Project Idea": "={{ $json['Learning Goal/ Project Idea'] }}",
+            "Email": "={{ $json.Email }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Profession",
+              "displayName": "Profession",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Learning Goal/ Project Idea",
+              "displayName": "Learning Goal/ Project Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        -208
+      ],
+      "id": "f8b2fddc-b626-4889-a600-3e2e17b50af6",
+      "name": "Append row in sheet"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7f08ca2d-a0fa-48f5-8713-ea679b1b820b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "WzxegP52LzEuoabw",
+  "tags": []
+}

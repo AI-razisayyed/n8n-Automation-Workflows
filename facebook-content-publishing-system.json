@@ -1,0 +1,591 @@
+{
+  "name": "Facebook Content Publishing System",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        192
+      ],
+      "id": "f75faa1e-752d-4a1d-b210-80f5bb5d9ae0",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "906b071e-3313-4ef3-9e86-038027af4bac",
+              "name": "Post",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        192,
+        -144
+      ],
+      "id": "ffe8c6ae-c7f7-4dc2-9748-4ad8226f1d8f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "your-email@example.com",
+        "subject": "Approval Required for your Facebook Post",
+        "message": "={{ $json.Post }}",
+        "responseType": "freeText",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -144
+      ],
+      "id": "7bfcfe53-0c21-4bb9-9527-cc0c1b7eed98",
+      "name": "Send message and wait for response",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.data.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Approve",
+              "description": "if the user is statisfied that means post is approved"
+            },
+            {
+              "category": "Decline",
+              "description": "if the user asked for changes/ modifications "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        -144
+      ],
+      "id": "934a625f-5edf-4e3f-8001-0e2b789b1253",
+      "name": "Text Classifier1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        64
+      ],
+      "id": "32837c9b-c4be-48b4-9980-198fea6716eb",
+      "name": "Google Gemini Chat Model1"
+    },
+    {
+      "parameters": {
+        "formTitle": "Facebook Post Idea Submission",
+        "formDescription": "submit your post idea so that AI can write and pulbish facebook post.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "what do you want to post on facebook?",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -400,
+        -144
+      ],
+      "id": "9be967aa-a686-4217-8d4d-57a6a364524c",
+      "name": "Post idea submission",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=post idea: {{ $json['what do you want to post on facebook?'] }}",
+        "options": {
+          "systemMessage": "You are a professional Facebook content writer operating inside an automated nån workflow. Your only job is to receive a post idea submitted by a user and transform it into a compelling, publish-ready Facebook post.\n## WHO YOU ARE\nYou write like a real human someone who understands social media, reads the room, and knows how to make content land. You adapt your tone to match the nature of the post idea: professional when the topic calls for it, casual and warm when it doesn't, motivational when the user wants to inspire. You never default to a single rigid style.\n\n\n## WHAT YOU WILL RECEIVE\nThe user message will contain one input: - {{ $json['What do you want to post on Facebook ?'] }}: A short description or rough idea the user want to turn into a wan Facebook post\n## YOUR JOB - STEP BY STEP\n\nStep 1 - READ THE IDEA\nUnderstand what the user is trying to communicate and who the likely audience is. Infer the appropriate tone from the subject matter.\n\nStep 2 - WRITE THE HOOK\nOpen with a single line that stops scrolling. Use a bold statement, a\nprovocative question, a surprising fact, or a relatable moment. Never open with \"Hey everyone!\", \"I'm excited to share\", or any weak filler line.\n\nStep 3 - BUILD THE BODY\nDevelop the idea in 2-4 short paragraphs. \nUse line breaks between each paragraph. Keep sentences punchy. Mix short and medium- length sentences. No walls of text.\n\nStep 4 - CLOSE WITH ENGAGEMENT\nEnd with a question, a CTA, or an invitation that prompts the audience to comment, share, or take action. Make it feel natural - not forced.\nStep 5 - ADD HASHTAGS\nAdd 3-5 relevant hashtags on a new line at the end. No more than 5. Choose hashtags that are specific and relevant not generic spam tags like #love or #instagood.\n\n## OUTPUT RULES\n\n\n- Return ONLY the final Facebook post - no labels, no preamble, no \"Here is your post\" - Length: 80 to 300 words\n- Format: short paragraphs with line breaks optimized for Facebook readability\nTone: matched to the post idea - do not force a single style\n- Never use: leverage, utilize, seamless, empower, synergy, cutting-edge, game- changer, paradigm\n-\nNever write placeholder text like [YOUR NAME] or [ADD CTA HERE] - always write the\nreal content the I\n- Never start the post with the word \"I\"\n- Sound like a real person wrote this - not an AI trying to sound professional\n\n\n## EDGE CASES\n- If the post idea is vague: make a specific creative choice and write it do not ask for clarification\n- If the post idea is already a draft: refine it, sharpen the hook, improve readability do not rewrite from scratch - If the post idea touches sensitive topics: write in a balanced, non-divisive,\nthoughtful tone\n- If the post idea is missing entirely: generate a general audience engagement post you are a helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -176,
+        -144
+      ],
+      "id": "766f9b2a-813b-4f2e-80d7-13b9d7a31d2a",
+      "name": "Post writing Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's the Post : {{ $('Edit Fields').item.json.Post }}\nHere's the Feedback: {{ $json.data.text }}",
+        "options": {
+          "systemMessage": "=You Tire an expert Facebook writer. Your job is to take an incoming post and revise it based on the feedback the human submitted.\nHuman Feedback: {{ $json.data.text }}\n\nPost to revise: {{ $('Edit Fields').item.json.Post }}\n\nAlso if the revisement needs real time data then use Serp to search real-time data otherwise ignore Serp.\n\nTool\nSerp: Use this for real-time web search. Current data and time : {{ $now }} \n\nInstruction\nJust give only output text means post text. Don't include text like \"Here is your\nrevised version...\" or something at the ending like \"how's now\" etc."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        768,
+        96
+      ],
+      "id": "ad658daa-63da-46ad-8af6-761ab8078a23",
+      "name": "Revision Agent1"
+    },
+    {
+      "parameters": {
+        "q": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Search_Query__q_', ``, 'string') }}",
+        "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Location__location_', ``, 'string') }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApiTool",
+      "typeVersion": 1,
+      "position": [
+        912,
+        336
+      ],
+      "id": "ba464718-d41d-4106-ab5a-61502b9dc0fd",
+      "name": "Serp"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        336
+      ],
+      "id": "d504cbac-b8e2-42c9-b942-a30f76aceae5",
+      "name": "Google Gemini Chat Model2"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1056,
+        32
+      ],
+      "id": "84baccdd-c3e3-4a0b-99be-57538cbe752e",
+      "name": "Google Gemini Chat Model3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's the Post for Infographics Prompt Generation:  {{ $('Edit Fields').item.json.Post }}",
+        "options": {
+          "systemMessage": "=You are an expert Creative Director.\n\nAnalyze the Facebook post and generate a detailed image prompt for creating a premium visual background only.\n\nInstructions:\n- Understand the main message, theme, and mood of the post. Create a strong visual concept that represents the content.\n- Use modern, premium, clean, and minimal design aesthetics.\n- Include relevant illustrations, realistic objects, abstract elements, lighting, gradients, textures, or 3D elements that match the topic. \n- Leave sufficient negative space where text can be added later.\n- Design the composition with a clear focal point while keeping areas reserved for future headline and description placement.\n- Use a color palette that matches the topic and emotion.\nAdd depth, soft shadows, glow, and professional lighting where appropriate.\n- The image should look like a high-end social media campaign created by an experienced designer.\n- Optimize for a square Facebook post (1080x1080).\n\nIMPORTANT:\n- Do NOT generate any text.\n- Do NOT include typography.\n- Do NOT add headlines, captions, labels, letters, numbers, logos, UI elements, or watermarks.\n- Create only the visual artwork/background with empty space for text overlays.\n\nReturn only the final image-generation prompt."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1056,
+        -160
+      ],
+      "id": "7f395191-386a-4ee2-bc90-5de6efb68ffb",
+      "name": "infographic prompt generator agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://router.huggingface.co/fal-ai/fal-ai/flux/dev?_subdomain=queue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_HUGGINGFACE_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "image/png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputs\": {{ JSON.stringify($json.output) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1184,
+        -368
+      ],
+      "id": "47857cb2-45a1-40eb-be34-cc3f963210d0",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite-image"
+        },
+        "prompt": "=Here's the Prompt:  {{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        912,
+        -368
+      ],
+      "id": "8aa782ae-1ad9-4869-8423-233a992274ba",
+      "name": "Generate an image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudflare.com/client/v4/accounts/YOUR_CLOUDFLARE_ACCOUNT_ID/ai/run/@cf/black-forest-labs/flux-1-schnell",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CLOUDFLARE_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "image/png"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputs\": {{ JSON.stringify($json.output) }}\n}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1424,
+        -160
+      ],
+      "id": "3ea1419c-3854-4509-b0d9-a971a6457852",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1648,
+        -160
+      ],
+      "id": "4b2824c5-2eb1-4f7b-9944-cdb044c8e84b",
+      "name": "Upload file"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1872,
+        -160
+      ],
+      "id": "119c915a-3609-4912-9172-3791c44d38c6",
+      "name": "Share file"
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "edge": "photos",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "url"
+              },
+              {
+                "name": "caption",
+                "value": "={{ $('Edit Fields').item.json.Post }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        -160
+      ],
+      "id": "9a76152b-949e-4f1b-a383-5606272c9e5c",
+      "name": "Facebook Graph API"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Post writing Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier1": {
+      "main": [
+        [
+          {
+            "node": "infographic prompt generator agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revision Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post idea submission": {
+      "main": [
+        [
+          {
+            "node": "Post writing Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post writing Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Serp": {
+      "ai_tool": [
+        [
+          {
+            "node": "Revision Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revision Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revision Agent1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "infographic prompt generator agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "infographic prompt generator agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Share file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c073ae66-cad4-4c9b-8210-a0f41f5cdfa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "ExnI9N69MB1ZWLHV",
+  "tags": []
+}
